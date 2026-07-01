@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Biblioteca Vecinal</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+<style>
+
+:root{
+
+--bg:#f5f0e8;
+--text:#1a1a2e;
+--gold:#c8851a;
+--green:#27766a;
+--card:white;
+
+}
+
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+}
+
+body{
+
+background:var(--bg);
+font-family:Inter,sans-serif;
+color:var(--text);
+
+}
+
+header{
+
+padding:24px;
+background:white;
+border-bottom:6px solid var(--gold);
+
+}
+
+h1{
+
+font-family:"Playfair Display",serif;
+font-size:34px;
+
+}
+
+.container{
+
+max-width:900px;
+margin:auto;
+padding:20px;
+
+}
+
+input{
+
+width:100%;
+padding:14px;
+font-size:16px;
+border-radius:12px;
+border:1px solid #ddd;
+margin-bottom:20px;
+
+}
+
+.card{
+
+background:var(--card);
+padding:18px;
+border-radius:16px;
+margin-bottom:16px;
+box-shadow:0 2px 8px rgba(0,0,0,.08);
+
+}
+
+.card h2{
+
+font-size:20px;
+margin-bottom:6px;
+
+}
+
+.autor{
+
+opacity:.7;
+margin-bottom:10px;
+
+}
+
+.estado{
+
+font-weight:bold;
+color:var(--green);
+
+}
+
+button{
+
+margin-top:12px;
+width:100%;
+padding:12px;
+border:none;
+border-radius:12px;
+background:var(--gold);
+color:white;
+font-size:16px;
+cursor:pointer;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>
+
+<h1>📚 Biblioteca Vecinal</h1>
+
+</header>
+
+<div class="container">
+
+<input
+id="buscar"
+placeholder="Buscar por título o autor">
+
+<div id="catalogo">
+
+</div>
+
+</div>
+
+<script>
+
+const URL_SCRIPT = "https://script.google.com/macros/s/AKfycby-lAiYtmnv4vxzxGs2zWp1oFrical-2K9ZfDOahRNMDUc-9Gf756qEgO63lv58UX2L/exec";
+
+let librosGlobal = [];
+
+async function cargarCatalogo() {
+  const res = await fetch(URL_SCRIPT + "?action=catalogo");
+  librosGlobal = await res.json();
+  mostrar(librosGlobal);
+}
+
+function mostrar(libros) {
+  const div = document.getElementById("catalogo");
+  div.innerHTML = "";
+
+  libros.forEach(libro => {
+    div.innerHTML += `
+      <div class="card">
+        <h2>${libro.titulo}</h2>
+        <div class="autor">${libro.autor || ""}</div>
+        <div class="estado">
+  ${libro.disponible ? "Disponible" : "Reservado"}
+</div>
+
+<button 
+  ${libro.disponible ? "" : "disabled"}
+  onclick="abrirReserva(${libro.id})">
+  ${libro.disponible ? "Reservar" : "No disponible"}
+</button>
+    `;
+  });
+}
+
+// BUSCADOR
+document.getElementById("buscar").addEventListener("input", (e) => {
+  const texto = e.target.value.toLowerCase();
+
+  const filtrados = librosGlobal.filter(l =>
+    (l.titulo || "").toLowerCase().includes(texto) ||
+    (l.autor || "").toLowerCase().includes(texto)
+  );
+
+  mostrar(filtrados);
+});
+
+cargarCatalogo();
+function abrirReserva(idLibro) {
+  const nombre = prompt("Nombre y apellidos:");
+  if (!nombre) return;
+
+  const piso = prompt("Piso / puerta:");
+  if (!piso) return;
+
+  reservarLibro(idLibro, nombre, piso);
+}
+
+async function reservarLibro(idLibro, nombre, piso) {
+  const res = await fetch(URL_SCRIPT + "?action=reservar", {
+    method: "POST",
+    body: JSON.stringify({
+      libro_id: idLibro,
+      nombre: nombre,
+      piso: piso
+    })
+  });
+
+  const data = await res.json();
+  console.log(data);
+
+  alert("Reserva realizada");
+
+  cargarCatalogo();
+}
+</script>
+</body>
+
+</html>
